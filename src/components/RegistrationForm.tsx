@@ -320,8 +320,9 @@ export default function RegistrationForm() {
                 value={formData.lastDonationDate}
                 onChange={handleChange}
                 max={new Date().toISOString().split('T')[0]}
-                className="w-full h-11 px-3.5 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] ltr-content cursor-pointer"
+                className="w-full h-11 px-3.5 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] cursor-pointer appearance-none"
               />
+              <Calendar className="w-4 h-4 text-[#475569] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
             {fieldErrors.lastDonationDate && (
               <p className="text-xs text-[#002B49] font-medium mt-1">
