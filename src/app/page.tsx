@@ -2,8 +2,21 @@ import React from 'react';
 import Image from 'next/image';
 import RegistrationForm from '@/components/RegistrationForm';
 import { ShieldCheck, HeartHandshake, QrCode } from 'lucide-react';
+import { getServiceSupabase } from '@/lib/supabase';
 
-export default function Home() {
+export const dynamic = 'force-dynamic';
+
+export default async function Home() {
+  // Automatic Keep-Alive: Ping database on every page visit to prevent inactivity pause
+  try {
+    const supabase = getServiceSupabase();
+    if (supabase) {
+      await supabase.from('donor_registrations').select('id').limit(1);
+    }
+  } catch (err) {
+    // Silent catch so it never affects user rendering
+  }
+
   return (
     <main className="min-h-screen flex flex-col justify-between">
       {/* Official Top Institutional Header */}
