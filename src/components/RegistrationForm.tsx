@@ -211,7 +211,7 @@ export default function RegistrationForm() {
               type="tel"
               name="phoneNumber"
               required
-              placeholder="+970599123456 أو +972568123456"
+              placeholder="+970 / +972 xxxxxxxxx"
               value={formData.phoneNumber}
               onChange={handleChange}
               className="w-full h-11 px-3.5 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] placeholder-[#94A3B8] font-mono ltr-content"
