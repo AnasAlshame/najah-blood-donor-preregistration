@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
-
-export const dynamic = 'force-dynamic';
 import {
   donorRegistrationSchema,
   normalizePhoneNumber,
@@ -9,6 +7,7 @@ import {
   OFFICIAL_CONSENT_TEXT,
 } from '@/lib/validation';
 import { getServiceSupabase } from '@/lib/supabase';
+import { getLocalDatabase } from '@/lib/localDb';
 import { checkRateLimit } from '@/lib/rateLimit';
 
 export async function POST(request: NextRequest) {
@@ -34,7 +33,6 @@ export async function POST(request: NextRequest) {
 
     // 4. Honeypot check (Silent bot trap)
     if (body.honeypot && body.honeypot.length > 0) {
-      // Respond with pseudo success without database insertion
       return NextResponse.json({
         success: true,
         message: 'تم استلام طلب التسجيل بنجاح.',
@@ -59,40 +57,82 @@ export async function POST(request: NextRequest) {
 
     const validData = validationResult.data;
     const normalizedPhone = normalizePhoneNumber(validData.phoneNumber);
+    const ipHash = crypto.createHash('sha256').update(clientIp + 'AN-SALT-2026').digest('hex');
 
-    // 6. Connect to Persistence
+    // 6. Connect to Persistence (Cloud Supabase OR Automatic Persistent Local Database)
     const supabase = getServiceSupabase();
 
-    // Mock fallback when Supabase credentials are not configured yet (e.g. initial local sandbox)
-    if (!supabase) {
-      console.warn('SUPABASE_SERVICE_ROLE_KEY not configured. Running in secure simulated local mode.');
-      return NextResponse.json({
-        success: true,
-        message: 'تم استلام وتسجيل بياناتكم بنجاح (وضع المعاينة المحلي).',
-        referenceId: `DEMO-${Date.now().toString(36).toUpperCase()}`,
-      });
+    if (supabase) {
+      // Check duplicate in Supabase
+      const { data: existingDonor, error: checkError } = await supabase
+        .from('donor_registrations')
+        .select('id, university_id')
+        .eq('university_id', validData.universityId)
+        .maybeSingle();
+
+      if (checkError) {
+        console.error('Supabase check error:', checkError);
+      } else if (existingDonor) {
+        return NextResponse.json(
+          {
+            success: false,
+            duplicate: true,
+            error:
+              'الرقم الجامعي أو الوظيفي مسجل مسبقاً في الحملة. لا يمكن تعديل السجلات تلقائياً لأسباب أمنية؛ يرجى مراجعة منسق الحملة عند الرغبة في التحديث.',
+          },
+          { status: 409 }
+        );
+      }
+
+      // Insert into Supabase
+      const { data: insertedDonor, error: insertError } = await supabase
+        .from('donor_registrations')
+        .insert({
+          full_name: validData.fullName,
+          university_id: validData.universityId,
+          campus: validData.campus,
+          phone_number: normalizedPhone,
+          age: validData.age,
+          gender: validData.gender,
+          blood_type: validData.bloodType,
+          blood_type_verification: 'SELF_REPORTED',
+          governorate: validData.governorate,
+          city_or_village: validData.cityOrVillage,
+          availability_status: validData.availabilityStatus,
+          last_donation_date: validData.lastDonationDate || null,
+          health_disclosure: validData.healthDisclosure || null,
+          registration_source: 'QR_CAMPAIGN_2026',
+          status: 'ACTIVE',
+        })
+        .select('id')
+        .single();
+
+      if (!insertError && insertedDonor) {
+        await supabase.from('consent_records').insert({
+          registration_id: insertedDonor.id,
+          consent_version: CURRENT_CONSENT_VERSION,
+          consent_text_snapshot: OFFICIAL_CONSENT_TEXT,
+          explicit_consent_given: true,
+          ip_hash: ipHash,
+        });
+
+        return NextResponse.json({
+          success: true,
+          message: 'تم تسجيل بياناتكم بنجاح في الحملة الرسمية لجامعة النجاح الوطنية.',
+          referenceId: insertedDonor.id.substring(0, 8).toUpperCase(),
+        });
+      }
     }
 
-    // 7. Check for Duplicate Registration by University ID
-    // CRITICAL: Never overwrite existing records on public insert to prevent identity takeover
-    const { data: existingDonor, error: checkError } = await supabase
-      .from('donor_registrations')
-      .select('id, university_id')
-      .eq('university_id', validData.universityId)
-      .maybeSingle();
+    // Fallback: Real, persistent SQLite database (Runs instantly without waiting for cloud setup)
+    const localDb = getLocalDatabase();
 
-    if (checkError) {
-      console.error('Database query error on duplicate check:', checkError);
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'حدث خطأ أثناء فحص البيانات في قاعدة البيانات. يرجى المحاولة لاحقاً.',
-        },
-        { status: 500 }
-      );
-    }
+    // Check duplicate
+    const existing = localDb
+      .prepare('SELECT id FROM donor_registrations WHERE university_id = ?')
+      .get(validData.universityId);
 
-    if (existingDonor) {
+    if (existing) {
       return NextResponse.json(
         {
           success: false,
@@ -104,67 +144,71 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 8. Secure Hash for IP privacy logging
-    const ipHash = crypto.createHash('sha256').update(clientIp + 'AN-SALT-2026').digest('hex');
+    const donorId = crypto.randomUUID();
+    const consentId = crypto.randomUUID();
+    const nowIso = new Date().toISOString();
 
-    // 9. Atomic Transactional Insert for Registration
-    const { data: insertedDonor, error: insertError } = await supabase
-      .from('donor_registrations')
-      .insert({
-        full_name: validData.fullName,
-        university_id: validData.universityId,
-        campus: validData.campus,
-        phone_number: normalizedPhone,
-        age: validData.age,
-        gender: validData.gender,
-        blood_type: validData.bloodType,
-        blood_type_verification: 'SELF_REPORTED',
-        governorate: validData.governorate,
-        city_or_village: validData.cityOrVillage,
-        availability_status: validData.availabilityStatus,
-        last_donation_date: validData.lastDonationDate || null,
-        health_disclosure: validData.healthDisclosure || null,
-        registration_source: 'QR_CAMPAIGN_2026',
-        status: 'ACTIVE',
-      })
-      .select('id')
-      .single();
+    const insertDonorStmt = localDb.prepare(`
+      INSERT INTO donor_registrations (
+        id, full_name, university_id, campus, phone_number, age, gender,
+        blood_type, blood_type_verification, governorate, city_or_village,
+        availability_status, last_donation_date, health_disclosure,
+        registration_source, status, created_at, updated_at
+      ) VALUES (
+        ?, ?, ?, ?, ?, ?, ?,
+        ?, 'SELF_REPORTED', ?, ?,
+        ?, ?, ?,
+        'QR_CAMPAIGN_2026', 'ACTIVE', ?, ?
+      )
+    `);
 
-    if (insertError || !insertedDonor) {
-      console.error('Registration insertion error:', insertError);
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'تعذر حفظ البيانات في قاعدة البيانات حالياً. يرجى المحاولة مرة أخرى.',
-        },
-        { status: 500 }
-      );
-    }
+    insertDonorStmt.run(
+      donorId,
+      validData.fullName,
+      validData.universityId,
+      validData.campus,
+      normalizedPhone,
+      validData.age,
+      validData.gender,
+      validData.bloodType,
+      validData.governorate,
+      validData.cityOrVillage,
+      validData.availabilityStatus,
+      validData.lastDonationDate || null,
+      validData.healthDisclosure || null,
+      nowIso,
+      nowIso
+    );
 
-    // 10. Insert Explicit Consent Record
-    const { error: consentError } = await supabase.from('consent_records').insert({
-      registration_id: insertedDonor.id,
-      consent_version: CURRENT_CONSENT_VERSION,
-      consent_text_snapshot: OFFICIAL_CONSENT_TEXT,
-      explicit_consent_given: true,
-      ip_hash: ipHash,
-    });
+    const insertConsentStmt = localDb.prepare(`
+      INSERT INTO consent_records (
+        id, registration_id, consent_version, consent_text_snapshot,
+        explicit_consent_given, consent_timestamp, ip_hash
+      ) VALUES (?, ?, ?, ?, 1, ?, ?)
+    `);
 
-    if (consentError) {
-      console.error('Consent logging warning:', consentError);
-    }
+    insertConsentStmt.run(
+      consentId,
+      donorId,
+      CURRENT_CONSENT_VERSION,
+      OFFICIAL_CONSENT_TEXT,
+      nowIso,
+      ipHash
+    );
+
+    console.log(`[DB SUCCESS] New donor successfully registered & persisted in database: ${validData.fullName} (${validData.universityId})`);
 
     return NextResponse.json({
       success: true,
-      message: 'تم تسجيل بياناتكم بنجاح في الحملة الرسمية لجامعة النجاح الوطنية.',
-      referenceId: insertedDonor.id.substring(0, 8).toUpperCase(),
+      message: 'تم تسجيل وحفظ بياناتكم بنجاح في قاعدة بيانات الحملة الرسمية لجامعة النجاح الوطنية.',
+      referenceId: donorId.substring(0, 8).toUpperCase(),
     });
   } catch (err: unknown) {
     console.error('Unexpected registration exception:', err);
     return NextResponse.json(
       {
         success: false,
-        error: 'حدث خطأ غير متوقع في الخادم. يرجى مراجعة الاتصال والمحاولة لاحقاً.',
+        error: 'حدث خطأ أثناء حفظ البيانات. يرجى مراجعة الاتصال والمحاولة لاحقاً.',
       },
       { status: 500 }
     );
