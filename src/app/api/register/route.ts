@@ -10,13 +10,14 @@ import { getServiceSupabase } from '@/lib/supabase';
 import { getLocalDatabase } from '@/lib/localDb';
 import { checkRateLimit } from '@/lib/rateLimit';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
-    // 1. Identify Client IP for abuse prevention
     const forwardedFor = request.headers.get('x-forwarded-for');
     const clientIp = forwardedFor ? forwardedFor.split(',')[0].trim() : '127.0.0.1';
 
-    // 2. Anti-abuse Rate Limiting
+    // Anti-abuse Rate Limiting
     const rateLimit = checkRateLimit(clientIp);
     if (!rateLimit.allowed) {
       return NextResponse.json(
@@ -28,10 +29,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 3. Parse JSON Body
     const body = await request.json();
 
-    // 4. Honeypot check (Silent bot trap)
+    // Honeypot check
     if (body.honeypot && body.honeypot.length > 0) {
       return NextResponse.json({
         success: true,
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 5. Server-side Schema Validation
+    // Schema Validation
     const validationResult = donorRegistrationSchema.safeParse(body);
     if (!validationResult.success) {
       const issues = validationResult.error.issues;
@@ -59,20 +59,18 @@ export async function POST(request: NextRequest) {
     const normalizedPhone = normalizePhoneNumber(validData.phoneNumber);
     const ipHash = crypto.createHash('sha256').update(clientIp + 'AN-SALT-2026').digest('hex');
 
-    // 6. Connect to Persistence (Cloud Supabase OR Automatic Persistent Local Database)
+    // 1. Supabase Cloud Persistence
     const supabase = getServiceSupabase();
 
     if (supabase) {
-      // Check duplicate in Supabase
+      // Check duplicate
       const { data: existingDonor, error: checkError } = await supabase
         .from('donor_registrations')
         .select('id, university_id')
         .eq('university_id', validData.universityId)
         .maybeSingle();
 
-      if (checkError) {
-        console.error('Supabase check error:', checkError);
-      } else if (existingDonor) {
+      if (!checkError && existingDonor) {
         return NextResponse.json(
           {
             success: false,
@@ -84,7 +82,12 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Insert into Supabase
+      // Combine detailed address into health_disclosure or store cleanly
+      const combinedNotes = [
+        validData.detailedAddress ? `العنوان التفصيلي: ${validData.detailedAddress}` : null,
+        validData.healthDisclosure ? `ملاحظات صحية: ${validData.healthDisclosure}` : null,
+      ].filter(Boolean).join(' | ');
+
       const { data: insertedDonor, error: insertError } = await supabase
         .from('donor_registrations')
         .insert({
@@ -100,7 +103,7 @@ export async function POST(request: NextRequest) {
           city_or_village: validData.cityOrVillage,
           availability_status: validData.availabilityStatus,
           last_donation_date: validData.lastDonationDate || null,
-          health_disclosure: validData.healthDisclosure || null,
+          health_disclosure: combinedNotes || null,
           registration_source: 'QR_CAMPAIGN_2026',
           status: 'ACTIVE',
         })
@@ -124,10 +127,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Fallback: Real, persistent SQLite database (Runs instantly without waiting for cloud setup)
+    // 2. Fallback local SQLite persistence
     const localDb = getLocalDatabase();
-
-    // Check duplicate
     const existing = localDb
       .prepare('SELECT id FROM donor_registrations WHERE university_id = ?')
       .get(validData.universityId);
@@ -147,6 +148,11 @@ export async function POST(request: NextRequest) {
     const donorId = crypto.randomUUID();
     const consentId = crypto.randomUUID();
     const nowIso = new Date().toISOString();
+
+    const combinedNotesLocal = [
+      validData.detailedAddress ? `العنوان التفصيلي: ${validData.detailedAddress}` : null,
+      validData.healthDisclosure ? `ملاحظات صحية: ${validData.healthDisclosure}` : null,
+    ].filter(Boolean).join(' | ');
 
     const insertDonorStmt = localDb.prepare(`
       INSERT INTO donor_registrations (
@@ -175,19 +181,17 @@ export async function POST(request: NextRequest) {
       validData.cityOrVillage,
       validData.availabilityStatus,
       validData.lastDonationDate || null,
-      validData.healthDisclosure || null,
+      combinedNotesLocal || null,
       nowIso,
       nowIso
     );
 
-    const insertConsentStmt = localDb.prepare(`
+    localDb.prepare(`
       INSERT INTO consent_records (
         id, registration_id, consent_version, consent_text_snapshot,
         explicit_consent_given, consent_timestamp, ip_hash
       ) VALUES (?, ?, ?, ?, 1, ?, ?)
-    `);
-
-    insertConsentStmt.run(
+    `).run(
       consentId,
       donorId,
       CURRENT_CONSENT_VERSION,
@@ -195,8 +199,6 @@ export async function POST(request: NextRequest) {
       nowIso,
       ipHash
     );
-
-    console.log(`[DB SUCCESS] New donor successfully registered & persisted in database: ${validData.fullName} (${validData.universityId})`);
 
     return NextResponse.json({
       success: true,

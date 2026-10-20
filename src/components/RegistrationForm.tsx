@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   BLOOD_TYPES,
   CAMPUSES,
@@ -10,20 +11,19 @@ import {
 } from '@/types/donor';
 import { OFFICIAL_CONSENT_TEXT } from '@/lib/validation';
 import {
-  CheckCircle2,
   AlertCircle,
   ShieldCheck,
-  Building2,
   Phone,
   User,
   Heart,
   Calendar,
   MapPin,
-  FileText,
   Loader2,
 } from 'lucide-react';
 
 export default function RegistrationForm() {
+  const router = useRouter();
+
   const [formData, setFormData] = useState({
     fullName: '',
     universityId: '',
@@ -34,6 +34,7 @@ export default function RegistrationForm() {
     bloodType: 'UNKNOWN',
     governorate: GOVERNORATES[0],
     cityOrVillage: '',
+    detailedAddress: '',
     availabilityStatus: AVAILABILITY_STATUSES[0],
     lastDonationDate: '',
     healthDisclosure: '',
@@ -44,10 +45,6 @@ export default function RegistrationForm() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
-  const [successData, setSuccessData] = useState<{
-    referenceId: string;
-    message: string;
-  } | null>(null);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -59,7 +56,6 @@ export default function RegistrationForm() {
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
-    // Clear error on edit
     if (errorMsg) setErrorMsg(null);
   };
 
@@ -78,6 +74,7 @@ export default function RegistrationForm() {
           age: formData.age ? Number(formData.age) : undefined,
           lastDonationDate: formData.lastDonationDate || null,
           healthDisclosure: formData.healthDisclosure || null,
+          detailedAddress: formData.detailedAddress || null,
         }),
       });
 
@@ -89,10 +86,8 @@ export default function RegistrationForm() {
           setFieldErrors(data.details);
         }
       } else {
-        setSuccessData({
-          referenceId: data.referenceId || 'CONFIRMED',
-          message: data.message,
-        });
+        // Redirect to clean success confirmation page
+        router.push('/success');
       }
     } catch (err: unknown) {
       console.error(err);
@@ -101,59 +96,6 @@ export default function RegistrationForm() {
       setLoading(false);
     }
   };
-
-  if (successData) {
-    return (
-      <div className="bg-white border border-[#E2E8F0] shadow-sm rounded-2xl p-6 md:p-10 max-w-2xl mx-auto my-8 text-center animate-in fade-in duration-300">
-        <div className="w-16 h-16 bg-[#00A3E0]/15 text-[#002B49] rounded-full flex items-center justify-center mx-auto mb-4 border border-[#00A3E0]/30">
-          <CheckCircle2 className="w-9 h-9 text-[#002B49]" />
-        </div>
-        <h2 className="text-2xl font-bold text-[#002B49] mb-2">
-          تم استلام تسجيلك بنجاح
-        </h2>
-        <p className="text-[#475569] mb-6 leading-relaxed">
-          {successData.message}
-        </p>
-
-        <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-4 mb-6">
-          <span className="text-xs text-[#475569] block mb-1 font-medium">الرقم المرجعي للتسجيل</span>
-          <span className="text-xl font-bold font-mono tracking-wider text-[#002B49] ltr-content inline-block">
-            {successData.referenceId}
-          </span>
-        </div>
-
-        <div className="text-xs text-[#475569] bg-[#F1F5F9] rounded-lg p-3 text-right leading-relaxed mb-6 border border-[#CBD5E1]">
-          <p className="font-semibold text-[#0F172A] mb-1">تنبيه وملاحظة هامة:</p>
-          يعد هذا التسجيل إبداءً للرغبة في التبرع المسبق بالدم ولا يعتبر إقراراً طبياً بالأهلية للتبرع. سيتم التواصل معك عند الحاجة لإجراء الفحص السريري المعتمد في بنك الدم.
-        </div>
-
-        <button
-          onClick={() => {
-            setSuccessData(null);
-            setFormData({
-              fullName: '',
-              universityId: '',
-              campus: CAMPUSES[0],
-              phoneNumber: '',
-              age: '',
-              gender: GENDER_OPTIONS[0],
-              bloodType: 'UNKNOWN',
-              governorate: GOVERNORATES[0],
-              cityOrVillage: '',
-              availabilityStatus: AVAILABILITY_STATUSES[0],
-              lastDonationDate: '',
-              healthDisclosure: '',
-              consentGiven: false,
-              honeypot: '',
-            });
-          }}
-          className="inline-flex items-center justify-center px-6 py-2.5 bg-[#002B49] hover:bg-[#002B49]/90 text-white rounded-xl text-sm font-semibold transition shadow-sm"
-        >
-          تسجيل متبرع جديد
-        </button>
-      </div>
-    );
-  }
 
   return (
     <form
@@ -202,7 +144,7 @@ export default function RegistrationForm() {
               placeholder="مثال: أحمد خليل عبد الرحمن مسعود"
               value={formData.fullName}
               onChange={handleChange}
-              className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] placeholder-[#94A3B8]"
+              className="w-full h-11 px-3.5 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] placeholder-[#94A3B8]"
             />
             {fieldErrors.fullName && (
               <p className="text-xs text-[#002B49] font-medium mt-1">
@@ -222,7 +164,7 @@ export default function RegistrationForm() {
               placeholder="مثال: 12115689"
               value={formData.universityId}
               onChange={handleChange}
-              className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] placeholder-[#94A3B8] font-mono ltr-content"
+              className="w-full h-11 px-3.5 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] placeholder-[#94A3B8] font-mono ltr-content"
             />
             {fieldErrors.universityId && (
               <p className="text-xs text-[#002B49] font-medium mt-1">
@@ -239,7 +181,7 @@ export default function RegistrationForm() {
               name="campus"
               value={formData.campus}
               onChange={handleChange}
-              className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A]"
+              className="w-full h-11 px-3.5 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A]"
             >
               {CAMPUSES.map((c) => (
                 <option key={c} value={c}>
@@ -263,16 +205,16 @@ export default function RegistrationForm() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-xs font-semibold text-[#0F172A] mb-1.5">
-              رقم الهاتف المحمول (جوال/أوريدو) <span className="text-[#002B49] font-bold">*</span>
+              رقم الهاتف المحمول <span className="text-[#002B49] font-bold">*</span>
             </label>
             <input
               type="tel"
               name="phoneNumber"
               required
-              placeholder="059xxxxxxx أو 056xxxxxxx"
+              placeholder="+970599123456 أو +972568123456"
               value={formData.phoneNumber}
               onChange={handleChange}
-              className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] placeholder-[#94A3B8] font-mono ltr-content"
+              className="w-full h-11 px-3.5 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] placeholder-[#94A3B8] font-mono ltr-content"
             />
             {fieldErrors.phoneNumber && (
               <p className="text-xs text-[#002B49] font-medium mt-1">
@@ -294,7 +236,7 @@ export default function RegistrationForm() {
               placeholder="مثال: 21"
               value={formData.age}
               onChange={handleChange}
-              className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] font-mono ltr-content"
+              className="w-full h-11 px-3.5 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] font-mono ltr-content"
             />
             {fieldErrors.age && (
               <p className="text-xs text-[#002B49] font-medium mt-1">
@@ -311,7 +253,7 @@ export default function RegistrationForm() {
               name="gender"
               value={formData.gender}
               onChange={handleChange}
-              className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A]"
+              className="w-full h-11 px-3.5 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A]"
             >
               {GENDER_OPTIONS.map((g) => (
                 <option key={g} value={g}>
@@ -341,7 +283,7 @@ export default function RegistrationForm() {
               name="bloodType"
               value={formData.bloodType}
               onChange={handleChange}
-              className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] font-semibold"
+              className="w-full h-11 px-3.5 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] font-semibold"
             >
               {BLOOD_TYPES.map((bt) => (
                 <option key={bt} value={bt}>
@@ -349,9 +291,6 @@ export default function RegistrationForm() {
                 </option>
               ))}
             </select>
-            <span className="text-[11px] text-[#475569] block mt-1">
-              * يتم التعامل مع زمرة الدم كبيان ذاتي من قبلك يخضع للتحقق المخبري لاحقاً.
-            </span>
           </div>
 
           <div>
@@ -362,7 +301,7 @@ export default function RegistrationForm() {
               name="availabilityStatus"
               value={formData.availabilityStatus}
               onChange={handleChange}
-              className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A]"
+              className="w-full h-11 px-3.5 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A]"
             >
               <option value="AVAILABLE">مستعد وجاهز للتواصل عند الحاجة</option>
               <option value="CURRENTLY_UNAVAILABLE">غير متاح حالياً للتبرع</option>
@@ -374,14 +313,16 @@ export default function RegistrationForm() {
             <label className="block text-xs font-semibold text-[#0F172A] mb-1.5">
               تاريخ آخر تبرع بالدم (اختياري)
             </label>
-            <input
-              type="date"
-              name="lastDonationDate"
-              value={formData.lastDonationDate}
-              onChange={handleChange}
-              max={new Date().toISOString().split('T')[0]}
-              className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] ltr-content"
-            />
+            <div className="relative">
+              <input
+                type="date"
+                name="lastDonationDate"
+                value={formData.lastDonationDate}
+                onChange={handleChange}
+                max={new Date().toISOString().split('T')[0]}
+                className="w-full h-11 px-3.5 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] ltr-content cursor-pointer"
+              />
+            </div>
             {fieldErrors.lastDonationDate && (
               <p className="text-xs text-[#002B49] font-medium mt-1">
                 {fieldErrors.lastDonationDate[0]}
@@ -400,13 +341,13 @@ export default function RegistrationForm() {
               value={formData.healthDisclosure}
               onChange={handleChange}
               maxLength={500}
-              className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] placeholder-[#94A3B8]"
+              className="w-full h-11 px-3.5 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] placeholder-[#94A3B8]"
             />
           </div>
         </div>
       </div>
 
-      {/* 4. Geographic Location */}
+      {/* 4. Geographic Location & Detailed Address */}
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-4 pb-2 border-b border-[#E2E8F0]">
           <MapPin className="w-5 h-5 text-[#002B49]" />
@@ -415,7 +356,7 @@ export default function RegistrationForm() {
           </h3>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div>
             <label className="block text-xs font-semibold text-[#0F172A] mb-1.5">
               المحافظة <span className="text-[#002B49] font-bold">*</span>
@@ -424,7 +365,7 @@ export default function RegistrationForm() {
               name="governorate"
               value={formData.governorate}
               onChange={handleChange}
-              className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A]"
+              className="w-full h-11 px-3.5 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A]"
             >
               {GOVERNORATES.map((gov) => (
                 <option key={gov} value={gov}>
@@ -442,10 +383,10 @@ export default function RegistrationForm() {
               type="text"
               name="cityOrVillage"
               required
-              placeholder="مثال: رفيديا، عصيرة الشمالية، صرة..."
+              placeholder="مثال: نابلس، رفيديا، عصيرة..."
               value={formData.cityOrVillage}
               onChange={handleChange}
-              className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] placeholder-[#94A3B8]"
+              className="w-full h-11 px-3.5 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] placeholder-[#94A3B8]"
             />
             {fieldErrors.cityOrVillage && (
               <p className="text-xs text-[#002B49] font-medium mt-1">
@@ -453,6 +394,26 @@ export default function RegistrationForm() {
               </p>
             )}
           </div>
+        </div>
+
+        {/* Detailed Address Field */}
+        <div>
+          <label className="block text-xs font-semibold text-[#0F172A] mb-1.5">
+            العنوان بالتفصيل (اسم الشارع، اسم البناية، رقم الشقة / الطابق)
+          </label>
+          <input
+            type="text"
+            name="detailedAddress"
+            placeholder="مثال: شارع الجامعة، عمارة القدس، الطابق الثالث، شقة رقم 6..."
+            value={formData.detailedAddress}
+            onChange={handleChange}
+            className="w-full h-11 px-3.5 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] placeholder-[#94A3B8]"
+          />
+          {fieldErrors.detailedAddress && (
+            <p className="text-xs text-[#002B49] font-medium mt-1">
+              {fieldErrors.detailedAddress[0]}
+            </p>
+          )}
         </div>
       </div>
 

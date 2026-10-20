@@ -63,7 +63,7 @@ export const donorRegistrationSchema = z.object({
     .string()
     .trim()
     .refine((val) => isValidPalestinianPhone(val), {
-      message: 'يرجى إدخال رقم جوال فلسطيني صحيح يبدأ بـ 059 أو 056 ويتكون من 10 أرقام',
+      message: 'يرجى إدخال رقم جوال فلسطيني صحيح (مثال: +970599123456 أو 0599123456)',
     }),
 
   age: z
@@ -90,6 +90,14 @@ export const donorRegistrationSchema = z.object({
     .trim()
     .min(2, { message: 'يرجى إدخال المدينة أو البلدة أو القرية' })
     .max(100, { message: 'اسم المنطقة طويل جداً' }),
+
+  detailedAddress: z
+    .string()
+    .trim()
+    .min(3, { message: 'يرجى إدخال تفاصيل العنوان (الشارع، البناية، رقم الشقة)' })
+    .max(300, { message: 'تفاصيل العنوان طويلة جداً' })
+    .optional()
+    .nullable(),
 
   availabilityStatus: z.enum(AVAILABILITY_STATUSES, {
     message: 'يرجى اختيار حالة الاستعداد للتواصل',
@@ -120,6 +128,5 @@ export const donorRegistrationSchema = z.object({
     message: 'يجب قراءة إقرار الخصوصية والموافقة الصريحة عليه لإتمام التسجيل',
   }),
 
-  // Honeypot field for bot spam detection: must remain empty
   honeypot: z.string().max(0, { message: 'Spam detected' }).optional(),
 });

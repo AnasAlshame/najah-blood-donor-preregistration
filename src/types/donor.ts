@@ -13,10 +13,9 @@ export const BLOOD_TYPES = [
 export type BloodType = (typeof BLOOD_TYPES)[number];
 
 export const CAMPUSES = [
+  'الحرم الجديد (الأكاديمية)',
   'الحرم القديم',
-  'الحرم الجديد (الجنيد)',
   'كلية هشام حجاوي التكنولوجية',
-  'كليات الطب وعلوم الصحة / المستشفى الجامعي',
   'فرع طولكرم (كلية الزراعة والطب البيطري)',
 ] as const;
 
@@ -64,11 +63,12 @@ export interface DonorRegistrationInput {
   bloodType: BloodType;
   governorate: Governorate;
   cityOrVillage: string;
+  detailedAddress?: string | null;
   availabilityStatus: AvailabilityStatus;
   lastDonationDate?: string | null;
   healthDisclosure?: string | null;
   consentGiven: boolean;
-  honeypot?: string; // Bot protection
+  honeypot?: string;
 }
 
 export interface DonorRecord extends DonorRegistrationInput {

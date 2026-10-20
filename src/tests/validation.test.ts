@@ -24,20 +24,21 @@ describe('Validation Logic and Phone Normalization Tests', () => {
     // Invalid phone numbers
     expect(isValidPalestinianPhone('0521234567')).toBe(false);
     expect(isValidPalestinianPhone('12345')).toBe(false);
-    expect(isValidPalestinianPhone('059912345')).toBe(false); // only 9 digits
+    expect(isValidPalestinianPhone('059912345')).toBe(false);
   });
 
   it('validates a complete, valid donor registration payload', () => {
     const validPayload = {
       fullName: 'أحمد خليل عبد الرحمن',
       universityId: '12015890',
-      campus: 'الحرم الجديد (الجنيد)',
+      campus: 'الحرم الجديد (الأكاديمية)',
       phoneNumber: '0599876543',
       age: 21,
       gender: 'ذكر',
       bloodType: 'O+',
       governorate: 'نابلس',
       cityOrVillage: 'رفيديا',
+      detailedAddress: 'شارع الجامعة، عمارة النور، طابق 2',
       availabilityStatus: 'AVAILABLE',
       lastDonationDate: '2025-10-15',
       healthDisclosure: 'لا توجد أي أمراض مزمنة بحمد الله',
@@ -60,7 +61,7 @@ describe('Validation Logic and Phone Normalization Tests', () => {
       governorate: 'طولكرم',
       cityOrVillage: 'المدينة',
       availabilityStatus: 'AVAILABLE',
-      consentGiven: false, // Refused consent
+      consentGiven: false,
     };
 
     const result = donorRegistrationSchema.safeParse(payloadWithoutConsent);
@@ -75,7 +76,7 @@ describe('Validation Logic and Phone Normalization Tests', () => {
     const payload = {
       fullName: 'محمد يوسف',
       universityId: '12133445',
-      campus: 'كليات الطب وعلوم الصحة / المستشفى الجامعي',
+      campus: 'الحرم الجديد (الأكاديمية)',
       phoneNumber: '0599112233',
       age: 20,
       gender: 'ذكر',
