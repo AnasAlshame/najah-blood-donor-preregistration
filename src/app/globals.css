@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+:root {
+  --najah-navy: #002B49;
+  --najah-cyan: #00A3E0;
+  --najah-bg: #F8FAFC;
+  --najah-text: #0F172A;
+  --najah-muted: #475569;
+  --najah-border: #E2E8F0;
+}
+
+body {
+  background-color: var(--najah-bg);
+  color: var(--najah-text);
+  font-family: var(--font-cairo), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  direction: rtl;
+  text-align: right;
+  min-height: 100vh;
+}
+
+/* Ensure numbers and blood groups look natural */
+.ltr-content {
+  direction: ltr;
+  text-align: left;
+}
+
+/* Accessible focus ring using University Cyan */
+input:focus, select:focus, textarea:focus, button:focus {
+  outline: 2px solid #00A3E0;
+  outline-offset: 2px;
+}
