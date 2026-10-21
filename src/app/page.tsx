@@ -34,10 +34,10 @@ export default async function Home() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-lg md:text-xl font-black text-white tracking-wide">
-                  حملة وَصْل
+                <span className="text-xl md:text-2xl font-black text-white tracking-wide">
+                  وَصْل
                 </span>
-                <span className="text-xs md:text-sm font-semibold text-[#00A3E0] font-sans tracking-wider">
+                <span className="text-xl md:text-2xl font-black text-[#00A3E0] font-sans tracking-wide">
                   | Wasel
                 </span>
               </div>

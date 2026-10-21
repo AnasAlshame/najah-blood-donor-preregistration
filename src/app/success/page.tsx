@@ -20,8 +20,10 @@ function SuccessContent() {
               />
             </div>
             <div>
-              <span className="text-base font-black text-white">حملة وَصْل</span>
-              <span className="text-xs font-semibold text-[#00A3E0] mr-1.5 font-sans">| Wasel</span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-lg md:text-xl font-black text-white">وَصْل</span>
+                <span className="text-lg md:text-xl font-black text-[#00A3E0] font-sans">| Wasel</span>
+              </div>
               <p className="text-[10px] text-slate-300">جامعة النجاح الوطنية</p>
             </div>
           </div>
