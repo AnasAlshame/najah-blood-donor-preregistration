@@ -137,7 +137,15 @@ async function runBackup() {
   console.log(`✓ Verified encrypted backup created: ${filePath} (${donors.length} donors, ${consents.length} consents).`);
 }
 
-runBackup().catch((err) => {
-  console.error('Backup failed:', err.message);
-  process.exit(1);
-});
+module.exports = {
+  runBackup,
+  fetchAllRows,
+  ALGORITHM,
+};
+
+if (require.main === module) {
+  runBackup().catch((err) => {
+    console.error('Backup failed:', err.message);
+    process.exit(1);
+  });
+}

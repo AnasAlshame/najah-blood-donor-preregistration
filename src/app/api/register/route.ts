@@ -13,9 +13,11 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
-    // 1. Identify Client IP for abuse prevention
+    // 1. Identify Client IP for abuse prevention (extracting trusted client IP)
     const forwardedFor = request.headers.get('x-forwarded-for');
-    const clientIp = forwardedFor ? forwardedFor.split(',')[0].trim() : '127.0.0.1';
+    const realIp = request.headers.get('x-real-ip');
+    // On Vercel and standard reverse proxies, take first IP from x-forwarded-for or x-real-ip
+    const clientIp = forwardedFor ? forwardedFor.split(',')[0].trim() : (realIp?.trim() || '127.0.0.1');
 
     // 2. Anti-abuse Rate Limiting
     const rateLimit = checkRateLimit(clientIp);
@@ -29,11 +31,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 3. Parse Body
-    const body = await request.json();
+    // 3. Parse Body Safely
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { success: false, error: 'صيغة البيانات المرسلة غير صالحة.' },
+        { status: 400 }
+      );
+    }
+
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      return NextResponse.json(
+        { success: false, error: 'صيغة البيانات المرسلة غير صالحة. يرجى إرسال كائن JSON صالح.' },
+        { status: 400 }
+      );
+    }
 
     // 4. Honeypot check (Silent bot trap)
-    if (body.honeypot && body.honeypot.length > 0) {
+    if (body.honeypot && typeof body.honeypot === 'string' && body.honeypot.length > 0) {
       return NextResponse.json({
         success: true,
         message: 'تم استلام طلب التسجيل بنجاح.',
@@ -63,7 +80,7 @@ export async function POST(request: NextRequest) {
     // 6. Connect to Authoritative Cloud Persistence
     const supabase = getServiceSupabase();
 
-    // Fail closed: Production must never pretend to succeed without the authoritative database
+    // Strict Fail-Closed: Production must never acknowledge success without database availability
     if (!supabase) {
       console.error('[CRITICAL] Authoritative Supabase service connection is missing or not configured.');
       return NextResponse.json(
@@ -75,11 +92,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 7. Atomic Insert with Automatic Rollback on Failure
-    // Attempts RPC first if migration 002 is run in Supabase SQL editor.
-    // Falls back safely to atomic multi-step with explicit rollback if RPC is not yet created.
-    let donorId: string | null = null;
-
+    // 7. Atomic Server-Controlled Transaction via Database RPC
+    // Enforces single-transaction commit: donor and consent commit together or fail together.
+    // Non-atomic client multi-step simulations are completely prohibited.
     const { data: rpcResult, error: rpcError } = await supabase.rpc('register_donor_atomic', {
       p_full_name: validData.fullName,
       p_university_id: validData.universityId,
@@ -100,38 +115,22 @@ export async function POST(request: NextRequest) {
       p_ip_hash: ipHash,
     });
 
-    if (!rpcError && rpcResult) {
-      const outcome = Array.isArray(rpcResult) ? rpcResult[0] : rpcResult;
-      if (outcome && outcome.success) {
-        donorId = outcome.donor_id;
-      } else if (outcome && outcome.error_code === 'DUPLICATE_ID') {
-        return NextResponse.json(
-          {
-            success: false,
-            duplicate: true,
-            error:
-              'الرقم الجامعي أو الوظيفي مسجل مسبقاً في الحملة. لا يمكن تعديل السجلات تلقائياً لأسباب أمنية؛ يرجى مراجعة منسق الحملة عند الرغبة في التحديث.',
-          },
-          { status: 409 }
-        );
-      }
-    } else {
-      // Standard safe multi-step execution with duplicate check & explicit rollback
-      const { data: existingDonor, error: checkError } = await supabase
-        .from('donor_registrations')
-        .select('id, university_id')
-        .eq('university_id', validData.universityId)
-        .maybeSingle();
+    if (rpcError) {
+      console.error('[DATABASE ERROR] Atomic registration RPC failed or missing:', rpcError);
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'حدث خطأ في الاتصال بقاعدة البيانات. تعذر إتمام التسجيل.',
+        },
+        { status: 500 }
+      );
+    }
 
-      if (checkError) {
-        console.error('[DATABASE ERROR] Check query failed:', checkError);
-        return NextResponse.json(
-          { success: false, error: 'حدث خطأ أثناء فحص البيانات في قاعدة البيانات.' },
-          { status: 500 }
-        );
-      }
+    const outcome = Array.isArray(rpcResult) ? rpcResult[0] : rpcResult;
 
-      if (existingDonor) {
+    // Fail-Closed on EVERY unsuccessful outcome
+    if (!outcome || outcome.success !== true) {
+      if (outcome && outcome.error_code === 'DUPLICATE_ID') {
         return NextResponse.json(
           {
             success: false,
@@ -143,68 +142,35 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Step A: Insert Donor Record
-      const { data: insertedDonor, error: insertError } = await supabase
-        .from('donor_registrations')
-        .insert({
-          full_name: validData.fullName,
-          university_id: validData.universityId,
-          university_email: validData.universityEmail,
-          campus: validData.campus,
-          phone_number: normalizedPhone,
-          age: validData.age,
-          gender: validData.gender,
-          blood_type: validData.bloodType,
-          blood_type_verification: 'SELF_REPORTED',
-          governorate: validData.governorate,
-          city_or_village: validData.cityOrVillage,
-          detailed_address: validData.detailedAddress,
-          availability_status: validData.availabilityStatus,
-          last_donation_date: validData.lastDonationDate || null,
-          health_disclosure: validData.healthDisclosure || null,
-          registration_source: 'QR_CAMPAIGN_2026',
-          status: 'ACTIVE',
-        })
-        .select('id')
-        .single();
+      console.error('[DATABASE REJECTION] Atomic transaction rejected with outcome:', outcome);
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'تعذر حفظ البيانات في قاعدة البيانات بشكل آمن. يرجى المحاولة لاحقاً.',
+        },
+        { status: 500 }
+      );
+    }
 
-      if (insertError || !insertedDonor) {
-        console.error('[DATABASE ERROR] Donor insert failed:', insertError);
-        return NextResponse.json(
-          { success: false, error: 'تعذر إتمام التسجيل في قاعدة البيانات حالياً.' },
-          { status: 500 }
-        );
-      }
-
-      // Step B: Insert Consent Record
-      const { error: consentError } = await supabase.from('consent_records').insert({
-        registration_id: insertedDonor.id,
-        consent_version: CURRENT_CONSENT_VERSION,
-        consent_text_snapshot: OFFICIAL_CONSENT_TEXT,
-        explicit_consent_given: true,
-        ip_hash: ipHash,
-      });
-
-      if (consentError) {
-        // Rollback: delete the inserted donor immediately to prevent orphaned records without consent
-        console.error('[CRITICAL] Consent logging failed, executing rollback on donor:', insertedDonor.id, consentError);
-        await supabase.from('donor_registrations').delete().eq('id', insertedDonor.id);
-        return NextResponse.json(
-          { success: false, error: 'فشل توثيق إقرار الموافقة الصريحة. تم إلغاء التسجيل لضمان الخصوصية.' },
-          { status: 500 }
-        );
-      }
-
-      donorId = insertedDonor.id;
+    // Invariant Verification: Must have confirmed non-empty donor ID from database
+    if (!outcome.donor_id || typeof outcome.donor_id !== 'string') {
+      console.error('[INVARIANT ERROR] RPC succeeded but returned invalid donor_id:', outcome);
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'تعذر تأكيد حفظ السجل في قاعدة البيانات. تم إلغاء العملية.',
+        },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({
       success: true,
       message: 'تم تسجيل بياناتكم بنجاح في الحملة الرسمية لجامعة النجاح الوطنية.',
-      referenceId: donorId ? donorId.substring(0, 8).toUpperCase() : 'CONFIRMED',
+      referenceId: outcome.donor_id.substring(0, 8).toUpperCase(),
     });
   } catch (err: unknown) {
-    console.error('[UNEXPECTED EXCEPTION] register route error:', err);
+    console.error('[UNEXPECTED EXCEPTION] register route exception:', err);
     return NextResponse.json(
       {
         success: false,

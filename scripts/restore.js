@@ -29,26 +29,7 @@ async function runRestore() {
 
   const rawPackage = JSON.parse(fs.readFileSync(backupFile, 'utf8'));
 
-  // 1. Verify Checksum
-  const computedChecksum = crypto.createHash('sha256').update(rawPackage.data).digest('hex');
-  if (computedChecksum !== rawPackage.checksum) {
-    console.error('[INTEGRITY ERROR] Backup package checksum does not match. Possible tampering or corruption.');
-    process.exit(1);
-  }
-
-  // 2. Decrypt
-  const keyBuffer = crypto.scryptSync(encryptionKey, 'wasel_salt_2026', 32);
-  const decipher = crypto.createDecipheriv(
-    ALGORITHM,
-    keyBuffer,
-    Buffer.from(rawPackage.iv, 'hex')
-  );
-  decipher.setAuthTag(Buffer.from(rawPackage.authTag, 'hex'));
-
-  let decrypted = decipher.update(rawPackage.data, 'hex', 'utf8');
-  decrypted += decipher.final('utf8');
-
-  const restoredData = JSON.parse(decrypted);
+  const restoredData = decryptAndVerifyBackup(rawPackage, encryptionKey);
   console.log(`✓ Backup successfully decrypted and cryptographically verified.`);
   console.log(`Campaign: ${restoredData.metadata.campaign} | Exported: ${restoredData.metadata.exported_at}`);
   console.log(`Donors in package: ${restoredData.donors.length}`);
@@ -84,7 +65,37 @@ async function runRestore() {
   console.log('✓ Full database restoration verified and completed successfully.');
 }
 
-runRestore().catch((err) => {
-  console.error('[RESTORE ERROR] Restoration failed:', err.message);
-  process.exit(1);
-});
+function decryptAndVerifyBackup(backupPackage, encryptionKey) {
+  // 1. Verify Checksum
+  const computedChecksum = crypto.createHash('sha256').update(backupPackage.data).digest('hex');
+  if (computedChecksum !== backupPackage.checksum) {
+    throw new Error('Backup package checksum does not match. Possible tampering or corruption.');
+  }
+
+  // 2. Decrypt
+  const keyBuffer = crypto.scryptSync(encryptionKey, 'wasel_salt_2026', 32);
+  const decipher = crypto.createDecipheriv(
+    ALGORITHM,
+    keyBuffer,
+    Buffer.from(backupPackage.iv, 'hex')
+  );
+  decipher.setAuthTag(Buffer.from(backupPackage.authTag, 'hex'));
+
+  let decrypted = decipher.update(backupPackage.data, 'hex', 'utf8');
+  decrypted += decipher.final('utf8');
+
+  return JSON.parse(decrypted);
+}
+
+module.exports = {
+  runRestore,
+  decryptAndVerifyBackup,
+  ALGORITHM,
+};
+
+if (require.main === module) {
+  runRestore().catch((err) => {
+    console.error('[RESTORE ERROR] Restoration failed:', err.message);
+    process.exit(1);
+  });
+}
