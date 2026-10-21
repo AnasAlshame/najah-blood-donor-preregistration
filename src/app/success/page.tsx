@@ -7,20 +7,27 @@ function SuccessContent() {
   return (
     <div className="min-h-screen flex flex-col justify-between bg-[#F8FAFC]">
       {/* Official Top Institutional Header */}
-      <header className="bg-[#002B49] text-white py-6 px-4 border-b-4 border-[#00A3E0] shadow-md">
-        <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="relative w-48 h-12">
-            <Image
-              src="/images/najah-logo.svg"
-              alt="شعار جامعة النجاح الوطنية"
-              fill
-              priority
-              className="object-contain"
-            />
+      <header className="bg-[#002B49] text-white py-4 px-4 border-b-4 border-[#00A3E0] shadow-md">
+        <div className="max-w-4xl mx-auto flex flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="relative w-12 h-12 shrink-0 rounded-full overflow-hidden border-2 border-[#00A3E0] shadow-md bg-white">
+              <Image
+                src="/images/wasel-logo.jpg"
+                alt="شعار حملة وَصْل الرسمية"
+                fill
+                priority
+                className="object-cover"
+              />
+            </div>
+            <div>
+              <span className="text-base font-black text-white">حملة وَصْل</span>
+              <span className="text-xs font-semibold text-[#00A3E0] mr-1.5 font-sans">| Wasel</span>
+              <p className="text-[10px] text-slate-300">جامعة النجاح الوطنية</p>
+            </div>
           </div>
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#00A3E0]/20 text-white border border-[#00A3E0]/40">
             <ShieldCheck className="w-3.5 h-3.5 text-[#00A3E0]" />
-            الحملة التطوعية الرسمية المعتمدة
+            الحملة الرسمية المعتمدة
           </span>
         </div>
       </header>
