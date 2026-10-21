@@ -341,7 +341,21 @@ export default function RegistrationForm() {
               type="date"
               name="lastDonationDate"
               value={formData.lastDonationDate}
-              onChange={handleChange}
+              onChange={(e) => {
+                const val = e.target.value;
+                setFormData((prev) => ({ ...prev, lastDonationDate: val || '' }));
+                if (fieldErrors.lastDonationDate) {
+                  setFieldErrors((prev) => {
+                    const updated = { ...prev };
+                    delete updated.lastDonationDate;
+                    return updated;
+                  });
+                }
+              }}
+              onInput={(e) => {
+                const val = (e.target as HTMLInputElement).value;
+                setFormData((prev) => ({ ...prev, lastDonationDate: val || '' }));
+              }}
               max={new Date().toISOString().split('T')[0]}
               className="w-full h-11 px-3.5 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] cursor-pointer"
             />

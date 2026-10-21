@@ -24,16 +24,12 @@ body {
   text-align: left;
 }
 
-/* Custom styling for date inputs to look consistent across browsers and mobile */
+/* Date input styling */
 input[type="date"] {
-  position: relative;
   font-family: inherit;
   color-scheme: light;
-}
-
-input[type="date"]::-webkit-calendar-picker-indicator {
-  cursor: pointer;
-  padding: 4px;
+  direction: rtl;
+  text-align: right;
 }
 
 /* Accessible focus ring using University Cyan */
