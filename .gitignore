@@ -39,3 +39,18 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# SQLite databases, journals and WAL files
+*.sqlite
+*.sqlite-*
+data/*.sqlite*
+temp_*.sqlite*
+
+# Backup artifacts, database dumps and plaintext exports
+backups/*.json
+backups/*.csv
+backups/*.enc.json
+*.enc.json
+*.csv
+*.sql.bak
+

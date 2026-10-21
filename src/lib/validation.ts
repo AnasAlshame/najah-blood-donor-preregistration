@@ -57,8 +57,8 @@ export const donorRegistrationSchema = z.object({
     .string({ message: 'البريد الإلكتروني الجامعي مطلوب' })
     .trim()
     .toLowerCase()
-    .regex(/^s[0-9]+@stu\.najah\.edu$/, {
-      message: 'يجب إدخال بريد جامعي رسمي يبدأ بحرف s متبوعاً بالرقم الجامعي (مثال: s12323975@stu.najah.edu)',
+    .regex(/^s[0-9]{8}@stu\.najah\.edu$/, {
+      message: 'يجب إدخال بريد جامعي رسمي يبدأ بحرف s متبوعاً بالرقم الجامعي المكون من 8 خانات (مثال: s12323975@stu.najah.edu)',
     }),
 
   campus: z.enum(CAMPUSES, {
@@ -133,4 +133,15 @@ export const donorRegistrationSchema = z.object({
   }),
 
   honeypot: z.string().max(0, { message: 'Spam detected' }).optional(),
-});
+}).refine(
+  (data) => {
+    // Consistency check: The student ID in the email must match the universityId field
+    const emailPrefixMatch = data.universityEmail.match(/^s(\d{8})@stu\.najah\.edu$/);
+    if (!emailPrefixMatch) return false;
+    return emailPrefixMatch[1] === data.universityId;
+  },
+  {
+    message: 'الرقم الجامعي غير متطابق مع الرقم الموجود في البريد الإلكتروني الجامعي',
+    path: ['universityEmail'],
+  }
+);

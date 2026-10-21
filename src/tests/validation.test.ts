@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   donorRegistrationSchema,
   normalizePhoneNumber,
@@ -27,7 +27,7 @@ describe('Validation Logic and Phone Normalization Tests', () => {
     expect(isValidPalestinianPhone('059912345')).toBe(false);
   });
 
-  it('validates a complete, valid donor registration payload', () => {
+  it('validates a complete, valid donor registration payload with matching email', () => {
     const validPayload = {
       fullName: 'أحمد خليل عبد الرحمن',
       universityId: '12015890',
@@ -50,10 +50,32 @@ describe('Validation Logic and Phone Normalization Tests', () => {
     expect(result.success).toBe(true);
   });
 
+  it('rejects submissions where universityId does not match the email digits', () => {
+    const mismatchedPayload = {
+      fullName: 'أحمد خليل عبد الرحمن',
+      universityId: '12015890',
+      universityEmail: 's99999999@stu.najah.edu', // Mismatch!
+      campus: 'الحرم الجديد (الأكاديمية)',
+      phoneNumber: '0599876543',
+      age: 21,
+      gender: 'ذكر',
+      bloodType: 'O+',
+      governorate: 'نابلس',
+      cityOrVillage: 'رفيديا',
+      detailedAddress: 'شارع الجامعة، عمارة النور، طابق 2',
+      availabilityStatus: 'AVAILABLE',
+      consentGiven: true,
+    };
+
+    const result = donorRegistrationSchema.safeParse(mismatchedPayload);
+    expect(result.success).toBe(false);
+  });
+
   it('rejects submissions without explicit consent', () => {
     const payloadWithoutConsent = {
       fullName: 'فاطمة محمود علي',
       universityId: '11924560',
+      universityEmail: 's11924560@stu.najah.edu',
       campus: 'الحرم القديم',
       phoneNumber: '0568765432',
       age: 22,
@@ -61,6 +83,7 @@ describe('Validation Logic and Phone Normalization Tests', () => {
       bloodType: 'A-',
       governorate: 'طولكرم',
       cityOrVillage: 'المدينة',
+      detailedAddress: 'شارع القدس',
       availabilityStatus: 'AVAILABLE',
       consentGiven: false,
     };
@@ -99,6 +122,7 @@ describe('Validation Logic and Phone Normalization Tests', () => {
     const botPayload = {
       fullName: 'Spam Bot',
       universityId: '99999999',
+      universityEmail: 's99999999@stu.najah.edu',
       campus: 'الحرم القديم',
       phoneNumber: '0599000000',
       age: 25,
@@ -106,6 +130,7 @@ describe('Validation Logic and Phone Normalization Tests', () => {
       bloodType: 'AB+',
       governorate: 'نابلس',
       cityOrVillage: 'نابلس',
+      detailedAddress: 'Spam Address',
       availabilityStatus: 'AVAILABLE',
       consentGiven: true,
       honeypot: 'i-am-a-bot',
