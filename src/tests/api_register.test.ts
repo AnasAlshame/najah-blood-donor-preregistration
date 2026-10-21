@@ -49,6 +49,7 @@ describe('Registration API Endpoint Security & Reliability Tests', () => {
         error: { code: 'PGRST202', message: 'Could not find the function public.register_donor_atomic' },
       }),
     };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     vi.spyOn(supabaseModule, 'getServiceSupabase').mockReturnValue(mockSupabase as any);
 
     const req = new NextRequest('http://localhost:3000/api/register', {
@@ -71,6 +72,7 @@ describe('Registration API Endpoint Security & Reliability Tests', () => {
         error: null,
       }),
     };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     vi.spyOn(supabaseModule, 'getServiceSupabase').mockReturnValue(mockSupabase as any);
 
     const req = new NextRequest('http://localhost:3000/api/register', {
@@ -93,6 +95,7 @@ describe('Registration API Endpoint Security & Reliability Tests', () => {
         error: null,
       }),
     };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     vi.spyOn(supabaseModule, 'getServiceSupabase').mockReturnValue(mockSupabase as any);
 
     const req = new NextRequest('http://localhost:3000/api/register', {
@@ -117,6 +120,7 @@ describe('Registration API Endpoint Security & Reliability Tests', () => {
         error: null,
       }),
     };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     vi.spyOn(supabaseModule, 'getServiceSupabase').mockReturnValue(mockSupabase as any);
 
     const req = new NextRequest('http://localhost:3000/api/register', {
@@ -142,6 +146,46 @@ describe('Registration API Endpoint Security & Reliability Tests', () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payloadWithoutConsent),
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.success).toBe(false);
+  });
+
+  it('safely handles null JSON body with 400 response and never unexpected 500', async () => {
+    const req = new NextRequest('http://localhost:3000/api/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: 'null',
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.success).toBe(false);
+    expect(body.error).toContain('صيغة البيانات المرسلة غير صالحة');
+  });
+
+  it('safely handles non-object JSON body (e.g. array or primitive) with 400 response', async () => {
+    const req = new NextRequest('http://localhost:3000/api/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(['malicious', 'array']),
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.success).toBe(false);
+  });
+
+  it('safely handles malformed non-JSON payload with 400 response', async () => {
+    const req = new NextRequest('http://localhost:3000/api/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: 'INVALID_JSON_BODY{{{',
     });
 
     const res = await POST(req);

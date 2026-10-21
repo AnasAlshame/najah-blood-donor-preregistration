@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 3. Parse Body
+    // 3. Parse Body Safely
     let body;
     try {
       body = await request.json();
@@ -40,8 +40,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      return NextResponse.json(
+        { success: false, error: 'صيغة البيانات المرسلة غير صالحة. يرجى إرسال كائن JSON صالح.' },
+        { status: 400 }
+      );
+    }
+
     // 4. Honeypot check (Silent bot trap)
-    if (body.honeypot && body.honeypot.length > 0) {
+    if (body.honeypot && typeof body.honeypot === 'string' && body.honeypot.length > 0) {
       return NextResponse.json({
         success: true,
         message: 'تم استلام طلب التسجيل بنجاح.',
