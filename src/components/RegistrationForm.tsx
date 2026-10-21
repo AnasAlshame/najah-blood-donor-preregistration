@@ -438,15 +438,10 @@ export default function RegistrationForm() {
               name="healthDisclosure"
               placeholder="مثال: حساسية موسمية خفيفة، لا توجد أمراض، عمليات جراحية سابقة، أدوية منتظمة..."
               value={formData.healthDisclosure}
-              onInput={(e) => {
-                const target = e.target as HTMLTextAreaElement;
-                target.style.height = '44px';
-                target.style.height = `${Math.max(44, target.scrollHeight)}px`;
-              }}
               onChange={handleChange}
               maxLength={5000}
-              rows={1}
-              className="w-full min-h-[44px] h-11 px-3.5 py-2.5 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] placeholder-[#94A3B8] resize-y overflow-hidden transition-all duration-150"
+              rows={2}
+              className="w-full min-h-[64px] p-3 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] placeholder-[#94A3B8] resize-y leading-relaxed"
             />
           </div>
         </div>
@@ -506,14 +501,14 @@ export default function RegistrationForm() {
           <label className="block text-xs font-semibold text-[#0F172A] mb-1.5">
             العنوان بالتفصيل (اسم الشارع، اسم البناية، رقم الشقة / الطابق) <span className="text-[#002B49] font-bold">*</span>
           </label>
-          <input
-            type="text"
+          <textarea
             name="detailedAddress"
             required
+            rows={2}
             placeholder="مثال: شارع الجامعة، عمارة القدس، الطابق الثالث، شقة رقم 6..."
             value={formData.detailedAddress}
             onChange={handleChange}
-            className="w-full h-11 px-3.5 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] placeholder-[#94A3B8]"
+            className="w-full min-h-[64px] p-3 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] placeholder-[#94A3B8] resize-y leading-relaxed"
           />
           {fieldErrors.detailedAddress && (
             <p className="text-xs text-[#002B49] font-medium mt-1">
