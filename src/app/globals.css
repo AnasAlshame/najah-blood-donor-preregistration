@@ -26,6 +26,7 @@ body {
 
 /* Custom styling for date inputs to look consistent across browsers and mobile */
 input[type="date"] {
+  position: relative;
   font-family: inherit;
   color-scheme: light;
 }

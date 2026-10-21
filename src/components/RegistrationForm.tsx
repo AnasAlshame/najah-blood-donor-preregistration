@@ -158,13 +158,14 @@ export default function RegistrationForm() {
 
           <div>
             <label className="block text-xs font-semibold text-[#0F172A] mb-1.5">
-              الرقم الجامعي أو الوظيفي <span className="text-[#002B49] font-bold">*</span>
+              الرقم الجامعي <span className="text-[#002B49] font-bold">*</span>
             </label>
             <input
               type="text"
               name="universityId"
               required
-              placeholder="مثال: 12115689"
+              maxLength={8}
+              placeholder="مثال: 12115689 (8 أرقام)"
               value={formData.universityId}
               onChange={handleChange}
               className="w-full h-11 px-3.5 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] placeholder-[#94A3B8] font-mono ltr-content"
@@ -178,7 +179,7 @@ export default function RegistrationForm() {
 
           <div className="md:col-span-2">
             <label className="block text-xs font-semibold text-[#0F172A] mb-1.5">
-              البريد الإلكتروني الجامعي للطلبة <span className="text-[#002B49] font-bold">*</span>
+              التسجيل بالإيميل الجامعي فقط <span className="text-[#002B49] font-bold">*</span>
             </label>
             <input
               type="email"
@@ -194,9 +195,6 @@ export default function RegistrationForm() {
                 {fieldErrors.universityEmail[0]}
               </p>
             )}
-            <span className="text-[11px] text-[#475569] block mt-1">
-              * يُشترط استخدام البريد الجامعي الرسمي بصيغة: s + الرقم الجامعي @stu.najah.edu
-            </span>
           </div>
 
           <div className="md:col-span-2">
@@ -336,35 +334,17 @@ export default function RegistrationForm() {
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-semibold text-[#0F172A]">
-                تاريخ آخر تبرع بالدم (اختياري)
-              </label>
-              {formData.lastDonationDate && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setFormData((prev) => ({ ...prev, lastDonationDate: '' }));
-                  }}
-                  className="inline-flex items-center gap-1 text-[11px] text-[#002B49] bg-[#E2E8F0] hover:bg-[#CBD5E1] px-2 py-0.5 rounded-md font-semibold cursor-pointer transition select-none z-10"
-                >
-                  ✕ تفريغ التاريخ
-                </button>
-              )}
-            </div>
-            <div className="relative">
-              <input
-                key={formData.lastDonationDate || 'empty-date'}
-                type="date"
-                name="lastDonationDate"
-                value={formData.lastDonationDate}
-                onChange={handleChange}
-                max={new Date().toISOString().split('T')[0]}
-                className="w-full h-11 px-3.5 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] cursor-pointer"
-              />
-            </div>
+            <label className="block text-xs font-semibold text-[#0F172A] mb-1.5">
+              تاريخ آخر تبرع بالدم (اختياري)
+            </label>
+            <input
+              type="date"
+              name="lastDonationDate"
+              value={formData.lastDonationDate}
+              onChange={handleChange}
+              max={new Date().toISOString().split('T')[0]}
+              className="w-full h-11 px-3.5 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] cursor-pointer"
+            />
             {fieldErrors.lastDonationDate && (
               <p className="text-xs text-[#002B49] font-medium mt-1">
                 {fieldErrors.lastDonationDate[0]}

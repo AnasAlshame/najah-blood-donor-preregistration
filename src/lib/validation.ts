@@ -47,12 +47,10 @@ export const donorRegistrationSchema = z.object({
     }),
 
   universityId: z
-    .string()
+    .string({ message: 'الرقم الجامعي مطلوب' })
     .trim()
-    .min(5, { message: 'الرقم الجامعي / الوظيفي يجب أن يتكون من 5 خانات على الأقل' })
-    .max(30, { message: 'الرقم الجامعي / الوظيفي لا يتجاوز 30 خانة' })
-    .regex(/^[A-Za-z0-9\-]+$/, {
-      message: 'الرقم الجامعي يجب أن يحتوي على أرقام أو رموز صالحة فقط',
+    .regex(/^\d{8}$/, {
+      message: 'الرقم الجامعي يجب أن يتكون من 8 أرقام فقط (ممنوع أكثر أو أقل)',
     }),
 
   universityEmail: z
