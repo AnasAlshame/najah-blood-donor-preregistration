@@ -64,8 +64,10 @@ export default async function Home() {
         <h1 className="text-2xl md:text-3xl font-extrabold text-[#002B49] mb-2">
           التسجيل المسبق للمتبرعين بالدم
         </h1>
-        <p className="text-sm md:text-base font-bold text-[#00A3E0] mb-2">
-          حملة وَصْل (Wasel) — قطرة منك .. حياة لإنسان
+        <p className="text-sm md:text-base font-bold text-[#002B49] mb-2">
+          <span className="text-amber-600 font-extrabold">وَصْل</span>{' '}
+          <span className="text-[#00A3E0] font-sans font-extrabold">| Wasel</span>{' '}
+          — قطرة منك .. حياة لإنسان
         </p>
         <p className="text-xs md:text-sm text-[#475569] max-w-2xl mx-auto leading-relaxed">
           ساهم في بناء قاعدة بيانات للمتبرعين بالدم من طلبة وموظفي جامعة النجاح الوطنية، لنتمكن من التواصل معك عند الحاجة لإنقاذ حياة أبناء شعبنا.
