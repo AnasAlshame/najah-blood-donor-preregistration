@@ -21,9 +21,11 @@ interface RateLimitRecord {
 
 const ipRequests = new Map<string, RateLimitRecord>();
 
-// Maximum 10 registrations per 5 minutes per client IP (Generous enough for campus NAT / shared Wi-Fi)
+// Campus NAT allowance: Max 30 registrations per 5 minutes per external IPv4/IPv6 gateway
+// This prevents denial of service for genuine students sharing university Wi-Fi / carrier CGNAT,
+// while effectively shutting down automated bot storms.
 const WINDOW_MS = 5 * 60 * 1000;
-const MAX_REQUESTS = 10;
+const MAX_REQUESTS = 30;
 
 // Maximum size of memory map to prevent memory exhaustion
 const MAX_MAP_ENTRIES = 5000;

@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
         const supabase = getServiceSupabase();
         if (supabase) {
           const clientIp = request.headers.get('x-forwarded-for') || 'direct';
-          await supabase.from('admin_audit_logs').insert({
+          const { error: auditErr } = await supabase.from('admin_audit_logs').insert({
             actor: 'UNAUTHORIZED_ATTEMPT',
             action: 'EXPORT_FAILED_AUTH',
             resource_type: 'donor_registrations',
@@ -49,9 +49,12 @@ export async function GET(request: NextRequest) {
               token_length: token.length,
             },
           });
+          if (auditErr) {
+            console.error('[AUDIT WARNING] Failed to record unauthorized attempt in audit log:', auditErr);
+          }
         }
       } catch (logErr) {
-        console.error('[AUDIT ERROR] Failed to record unauthorized attempt:', logErr);
+        console.error('[AUDIT ERROR] Exception recording unauthorized attempt:', logErr);
       }
 
       return NextResponse.json(
@@ -128,7 +131,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 4. Log Audit Event
-    await supabase.from('admin_audit_logs').insert({
+    const { error: logErr } = await supabase.from('admin_audit_logs').insert({
       actor: 'AUTHENTICATED_ADMIN_SECRET_KEY',
       action: 'EXPORT_ALL_RECORDS',
       resource_type: 'donor_registrations',
@@ -137,6 +140,9 @@ export async function GET(request: NextRequest) {
         client_ip_hash: crypto.createHash('sha256').update(request.headers.get('x-forwarded-for') || 'direct').digest('hex'),
       },
     });
+    if (logErr) {
+      console.error('[AUDIT WARNING] Failed to record successful export audit log:', logErr);
+    }
 
     const format = request.nextUrl.searchParams.get('format');
 
@@ -208,15 +214,29 @@ export async function GET(request: NextRequest) {
         headers: {
           'Content-Type': 'text/csv; charset=utf-8',
           'Content-Disposition': `attachment; filename="najah_wasel_donors_${Date.now()}.csv"`,
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+          'Surrogate-Control': 'no-store',
         },
       });
     }
 
-    return NextResponse.json({
-      success: true,
-      count: allRecords.length,
-      records: allRecords,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        count: allRecords.length,
+        records: allRecords,
+      },
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+          'Surrogate-Control': 'no-store',
+        },
+      }
+    );
   } catch (err: unknown) {
     console.error('[UNEXPECTED EXCEPTION] admin export route error:', err);
     return NextResponse.json(

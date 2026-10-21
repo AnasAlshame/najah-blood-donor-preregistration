@@ -161,21 +161,12 @@ describe('Backup & Restore Verification (Isolated Database Environment)', () => 
     expect(targetDb.public.many('SELECT count(*) as count FROM donor_registrations')[0].count).toBe(0);
     expect(targetDb.public.many('SELECT count(*) as count FROM consent_records')[0].count).toBe(0);
 
-    // 5. Restore: Read, Verify Checksum, Decrypt, and Restore
+    // 5. Restore: Exercise the real restore engine's decryptAndVerifyBackup function
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { decryptAndVerifyBackup } = require('../../scripts/restore.js');
     const fileContent = JSON.parse(fs.readFileSync(backupFilePath, 'utf8'));
-    const verifyChecksum = crypto.createHash('sha256').update(fileContent.data).digest('hex');
-    expect(verifyChecksum).toBe(fileContent.checksum);
-
-    const decipher = crypto.createDecipheriv(
-      ALGORITHM,
-      keyBuffer,
-      Buffer.from(fileContent.iv, 'hex')
-    );
-    decipher.setAuthTag(Buffer.from(fileContent.authTag, 'hex'));
-    let decrypted = decipher.update(fileContent.data, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
-
-    const restoredData = JSON.parse(decrypted);
+    const restoredData = decryptAndVerifyBackup(fileContent, TEST_ENCRYPTION_KEY);
+    
     expect(restoredData.donors.length).toBe(2);
     expect(restoredData.consents.length).toBe(2);
 

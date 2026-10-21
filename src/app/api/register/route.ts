@@ -13,9 +13,11 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
-    // 1. Identify Client IP for abuse prevention
+    // 1. Identify Client IP for abuse prevention (extracting trusted client IP)
     const forwardedFor = request.headers.get('x-forwarded-for');
-    const clientIp = forwardedFor ? forwardedFor.split(',')[0].trim() : '127.0.0.1';
+    const realIp = request.headers.get('x-real-ip');
+    // On Vercel and standard reverse proxies, take first IP from x-forwarded-for or x-real-ip
+    const clientIp = forwardedFor ? forwardedFor.split(',')[0].trim() : (realIp?.trim() || '127.0.0.1');
 
     // 2. Anti-abuse Rate Limiting
     const rateLimit = checkRateLimit(clientIp);

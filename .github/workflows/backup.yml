@@ -1,0 +1,47 @@
+name: Encrypted Offsite Backup
+
+on:
+  schedule:
+    # Runs every 6 hours (00:00, 06:00, 12:00, 18:00 UTC)
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Manual backup trigger reason'
+        required: false
+        default: 'Manual maintenance backup'
+
+jobs:
+  backup:
+    name: Execute Encrypted Backup
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Encrypted Backup Engine
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+        run: |
+          mkdir -p backups
+          node scripts/backup.js backups
+
+      - name: Archive Encrypted Backup Artifact (7 Days Retention)
+        uses: actions/upload-artifact@v4
+        with:
+          name: encrypted-wasel-backups-${{ github.run_id }}
+          path: backups/*.enc.json
+          retention-days: 7
+          if-no-files-found: error
