@@ -430,18 +430,18 @@ export default function RegistrationForm() {
             )}
           </div>
 
-          <div>
+          <div className="md:col-span-2">
             <label className="block text-xs font-semibold text-[#0F172A] mb-1.5">
               ملاحظة صحية ذاتية إن وجدت (اختياري)
             </label>
-            <input
-              type="text"
+            <textarea
               name="healthDisclosure"
-              placeholder="مثال: حساسية موسمية خفيفة، لا توجد أمراض..."
+              placeholder="مثال: حساسية موسمية خفيفة، لا توجد أمراض، عمليات جراحية سابقة، أدوية منتظمة..."
               value={formData.healthDisclosure}
               onChange={handleChange}
-              maxLength={500}
-              className="w-full h-11 px-3.5 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] placeholder-[#94A3B8]"
+              maxLength={1000}
+              rows={3}
+              className="w-full p-3.5 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] placeholder-[#94A3B8] resize-y min-h-[90px]"
             />
           </div>
         </div>

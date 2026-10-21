@@ -124,7 +124,7 @@ export const donorRegistrationSchema = z.object({
   healthDisclosure: z
     .string()
     .trim()
-    .max(500, { message: 'الملاحظة الصحية لا تتجاوز 500 حرف' })
+    .max(1000, { message: 'الملاحظة الصحية لا تتجاوز 1000 حرف' })
     .optional()
     .nullable(),
 
