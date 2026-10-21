@@ -1,8 +1,8 @@
+
 name: Encrypted Offsite Backup
 
 on:
   schedule:
-    # Runs every 6 hours (00:00, 06:00, 12:00, 18:00 UTC)
     - cron: '0 */6 * * *'
   workflow_dispatch:
     inputs:
@@ -29,6 +29,61 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
+      - name: Diagnose Supabase Connectivity
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+        run: |
+          node <<'NODE'
+          const dns = require('node:dns').promises;
+
+          async function main() {
+            const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+            if (!rawUrl) {
+              throw new Error('SUPABASE_URL_MISSING');
+            }
+
+            const url = new URL(rawUrl);
+
+            if (url.protocol !== 'https:') {
+              throw new Error('SUPABASE_URL_NOT_HTTPS');
+            }
+
+            console.log('Checking DNS resolution...');
+
+            try {
+              const addresses = await dns.lookup(url.hostname, { all: true });
+              console.log('DNS OK. Addresses found:', addresses.length);
+            } catch (error) {
+              console.error('DNS failed:', error.code, error.message);
+              process.exitCode = 1;
+              return;
+            }
+
+            console.log('Checking HTTPS connectivity...');
+
+            try {
+              const response = await fetch(
+                new URL('/rest/v1/', url),
+                { signal: AbortSignal.timeout(15000) }
+              );
+
+              console.log('HTTPS connected. Status:', response.status);
+              console.log('A 401 or 404 response still confirms HTTPS connectivity.');
+            } catch (error) {
+              console.error('HTTPS failed:', error.message);
+              console.error('Cause code:', error.cause?.code || 'unknown');
+              console.error('Cause message:', error.cause?.message || 'unknown');
+              process.exitCode = 1;
+            }
+          }
+
+          main().catch(error => {
+            console.error('Diagnostic failed:', error.message);
+            process.exitCode = 1;
+          });
+          NODE
+
       - name: Run Encrypted Backup Engine
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
@@ -38,7 +93,7 @@ jobs:
           mkdir -p backups
           node scripts/backup.js backups
 
-      - name: Archive Encrypted Backup Artifact (7 Days Retention)
+      - name: Archive Encrypted Backup Artifact
         uses: actions/upload-artifact@v4
         with:
           name: encrypted-wasel-backups-${{ github.run_id }}
