@@ -438,10 +438,15 @@ export default function RegistrationForm() {
               name="healthDisclosure"
               placeholder="مثال: حساسية موسمية خفيفة، لا توجد أمراض، عمليات جراحية سابقة، أدوية منتظمة..."
               value={formData.healthDisclosure}
+              onInput={(e) => {
+                const target = e.target as HTMLTextAreaElement;
+                target.style.height = '44px';
+                target.style.height = `${Math.max(44, target.scrollHeight)}px`;
+              }}
               onChange={handleChange}
-              maxLength={1000}
-              rows={3}
-              className="w-full p-3.5 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] placeholder-[#94A3B8] resize-y min-h-[90px]"
+              maxLength={5000}
+              rows={1}
+              className="w-full min-h-[44px] h-11 px-3.5 py-2.5 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] placeholder-[#94A3B8] resize-y overflow-hidden transition-all duration-150"
             />
           </div>
         </div>
