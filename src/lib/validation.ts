@@ -56,7 +56,7 @@ export const donorRegistrationSchema = z.object({
     }),
 
   universityEmail: z
-    .string({ required_error: 'البريد الإلكتروني الجامعي مطلوب' })
+    .string({ message: 'البريد الإلكتروني الجامعي مطلوب' })
     .trim()
     .toLowerCase()
     .regex(/^s[0-9]+@stu\.najah\.edu$/, {
@@ -100,7 +100,7 @@ export const donorRegistrationSchema = z.object({
     .max(100, { message: 'اسم المنطقة طويل جداً' }),
 
   detailedAddress: z
-    .string({ required_error: 'يرجى إدخال تفاصيل العنوان' })
+    .string({ message: 'يرجى إدخال تفاصيل العنوان' })
     .trim()
     .min(3, { message: 'يرجى إدخال تفاصيل العنوان (الشارع، البناية، رقم الشقة)' })
     .max(300, { message: 'تفاصيل العنوان طويلة جداً' }),
