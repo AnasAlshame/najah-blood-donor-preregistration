@@ -37,7 +37,9 @@ export default function RegistrationForm() {
     cityOrVillage: '',
     detailedAddress: '',
     availabilityStatus: AVAILABILITY_STATUSES[0],
-    lastDonationDate: '',
+    lastDonationDay: '',
+    lastDonationMonth: '',
+    lastDonationYear: '',
     healthDisclosure: '',
     consentGiven: false,
     honeypot: '',
@@ -67,13 +69,18 @@ export default function RegistrationForm() {
     setFieldErrors({});
 
     try {
+      let combinedDate: string | null = null;
+      if (formData.lastDonationYear && formData.lastDonationMonth && formData.lastDonationDay) {
+        combinedDate = `${formData.lastDonationYear}-${formData.lastDonationMonth.padStart(2, '0')}-${formData.lastDonationDay.padStart(2, '0')}`;
+      }
+
       const response = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
           age: formData.age ? Number(formData.age) : undefined,
-          lastDonationDate: formData.lastDonationDate || null,
+          lastDonationDate: combinedDate,
           healthDisclosure: formData.healthDisclosure || null,
           detailedAddress: formData.detailedAddress || null,
         }),
@@ -334,31 +341,88 @@ export default function RegistrationForm() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#0F172A] mb-1.5">
-              تاريخ آخر تبرع بالدم (اختياري)
-            </label>
-            <input
-              type="date"
-              name="lastDonationDate"
-              value={formData.lastDonationDate}
-              onChange={(e) => {
-                const val = e.target.value;
-                setFormData((prev) => ({ ...prev, lastDonationDate: val || '' }));
-                if (fieldErrors.lastDonationDate) {
-                  setFieldErrors((prev) => {
-                    const updated = { ...prev };
-                    delete updated.lastDonationDate;
-                    return updated;
-                  });
-                }
-              }}
-              onInput={(e) => {
-                const val = (e.target as HTMLInputElement).value;
-                setFormData((prev) => ({ ...prev, lastDonationDate: val || '' }));
-              }}
-              max={new Date().toISOString().split('T')[0]}
-              className="w-full h-11 px-3.5 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] cursor-pointer"
-            />
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-semibold text-[#0F172A]">
+                تاريخ آخر تبرع بالدم (اختياري)
+              </label>
+              {(formData.lastDonationDay || formData.lastDonationMonth || formData.lastDonationYear) && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      lastDonationDay: '',
+                      lastDonationMonth: '',
+                      lastDonationYear: '',
+                    }))
+                  }
+                  className="text-[11px] text-[#002B49] hover:underline font-bold cursor-pointer"
+                >
+                  إعادة ضبط (تفريغ)
+                </button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              {/* Day */}
+              <select
+                name="lastDonationDay"
+                value={formData.lastDonationDay}
+                onChange={handleChange}
+                className="w-full h-11 px-2.5 text-xs md:text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A]"
+              >
+                <option value="">اليوم</option>
+                {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+                  <option key={d} value={String(d)}>
+                    {d}
+                  </option>
+                ))}
+              </select>
+
+              {/* Month */}
+              <select
+                name="lastDonationMonth"
+                value={formData.lastDonationMonth}
+                onChange={handleChange}
+                className="w-full h-11 px-2.5 text-xs md:text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A]"
+              >
+                <option value="">الشهر</option>
+                {[
+                  { val: '1', label: '1 - يناير' },
+                  { val: '2', label: '2 - فبراير' },
+                  { val: '3', label: '3 - مارس' },
+                  { val: '4', label: '4 - أبريل' },
+                  { val: '5', label: '5 - مايو' },
+                  { val: '6', label: '6 - يونيو' },
+                  { val: '7', label: '7 - يوليو' },
+                  { val: '8', label: '8 - أغسطس' },
+                  { val: '9', label: '9 - سبتمبر' },
+                  { val: '10', label: '10 - أكتوبر' },
+                  { val: '11', label: '11 - نوفمبر' },
+                  { val: '12', label: '12 - ديسمبر' },
+                ].map((m) => (
+                  <option key={m.val} value={m.val}>
+                    {m.label}
+                  </option>
+                ))}
+              </select>
+
+              {/* Year */}
+              <select
+                name="lastDonationYear"
+                value={formData.lastDonationYear}
+                onChange={handleChange}
+                className="w-full h-11 px-2.5 text-xs md:text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A]"
+              >
+                <option value="">السنة</option>
+                {Array.from({ length: 25 }, (_, i) => 2026 - i).map((y) => (
+                  <option key={y} value={String(y)}>
+                    {y}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {fieldErrors.lastDonationDate && (
               <p className="text-xs text-[#002B49] font-medium mt-1">
                 {fieldErrors.lastDonationDate[0]}
