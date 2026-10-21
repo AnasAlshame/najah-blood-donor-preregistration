@@ -23,10 +23,10 @@ export default async function Home() {
       <header className="bg-[#002B49] text-white py-4 px-4 border-b-4 border-[#00A3E0] shadow-md">
         <div className="max-w-4xl mx-auto flex flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3 md:gap-4">
-            <div className="relative w-14 h-14 md:w-16 md:h-16 shrink-0 rounded-full overflow-hidden border-2 border-[#00A3E0] shadow-md bg-white">
+            <div className="relative w-14 h-14 md:w-16 md:h-16 shrink-0 rounded-full overflow-hidden shadow-lg border border-[#F59E0B]/40">
               <Image
-                src="/images/wasel-logo.jpg"
-                alt="شعار حملة وَصْل الرسمية"
+                src="/images/wasel-logo.png"
+                alt="شعار وَصْل الرسمي"
                 fill
                 priority
                 className="object-cover"
@@ -34,10 +34,10 @@ export default async function Home() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xl md:text-2xl font-black text-white tracking-wide">
+                <span className="text-xl md:text-2xl font-black tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-[#FDE047] via-[#F59E0B] to-[#D97706] drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
                   وَصْل
                 </span>
-                <span className="text-xl md:text-2xl font-black text-[#00A3E0] font-sans tracking-wide">
+                <span className="text-xl md:text-2xl font-black font-sans tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-[#38BDF8] to-[#0284C7] drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
                   | Wasel
                 </span>
               </div>

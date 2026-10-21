@@ -10,10 +10,10 @@ function SuccessContent() {
       <header className="bg-[#002B49] text-white py-4 px-4 border-b-4 border-[#00A3E0] shadow-md">
         <div className="max-w-4xl mx-auto flex flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="relative w-12 h-12 shrink-0 rounded-full overflow-hidden border-2 border-[#00A3E0] shadow-md bg-white">
+            <div className="relative w-12 h-12 shrink-0 rounded-full overflow-hidden shadow-lg border border-[#F59E0B]/40">
               <Image
-                src="/images/wasel-logo.jpg"
-                alt="شعار حملة وَصْل الرسمية"
+                src="/images/wasel-logo.png"
+                alt="شعار وَصْل الرسمي"
                 fill
                 priority
                 className="object-cover"
@@ -21,8 +21,12 @@ function SuccessContent() {
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="text-lg md:text-xl font-black text-white">وَصْل</span>
-                <span className="text-lg md:text-xl font-black text-[#00A3E0] font-sans">| Wasel</span>
+                <span className="text-lg md:text-xl font-black tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-[#FDE047] via-[#F59E0B] to-[#D97706]">
+                  وَصْل
+                </span>
+                <span className="text-lg md:text-xl font-black font-sans tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-[#38BDF8] to-[#0284C7]">
+                  | Wasel
+                </span>
               </div>
               <p className="text-[10px] text-slate-300">جامعة النجاح الوطنية</p>
             </div>
