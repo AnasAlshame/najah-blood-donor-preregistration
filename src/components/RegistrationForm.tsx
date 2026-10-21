@@ -400,11 +400,12 @@ export default function RegistrationForm() {
         {/* Detailed Address Field */}
         <div>
           <label className="block text-xs font-semibold text-[#0F172A] mb-1.5">
-            العنوان بالتفصيل (اسم الشارع، اسم البناية، رقم الشقة / الطابق)
+            العنوان بالتفصيل (اسم الشارع، اسم البناية، رقم الشقة / الطابق) <span className="text-[#002B49] font-bold">*</span>
           </label>
           <input
             type="text"
             name="detailedAddress"
+            required
             placeholder="مثال: شارع الجامعة، عمارة القدس، الطابق الثالث، شقة رقم 6..."
             value={formData.detailedAddress}
             onChange={handleChange}

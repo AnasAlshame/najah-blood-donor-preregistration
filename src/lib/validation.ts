@@ -92,12 +92,10 @@ export const donorRegistrationSchema = z.object({
     .max(100, { message: 'اسم المنطقة طويل جداً' }),
 
   detailedAddress: z
-    .string()
+    .string({ required_error: 'يرجى إدخال تفاصيل العنوان' })
     .trim()
     .min(3, { message: 'يرجى إدخال تفاصيل العنوان (الشارع، البناية، رقم الشقة)' })
-    .max(300, { message: 'تفاصيل العنوان طويلة جداً' })
-    .optional()
-    .nullable(),
+    .max(300, { message: 'تفاصيل العنوان طويلة جداً' }),
 
   availabilityStatus: z.enum(AVAILABILITY_STATUSES, {
     message: 'يرجى اختيار حالة الاستعداد للتواصل',

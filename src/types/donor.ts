@@ -63,7 +63,7 @@ export interface DonorRegistrationInput {
   bloodType: BloodType;
   governorate: Governorate;
   cityOrVillage: string;
-  detailedAddress?: string | null;
+  detailedAddress: string;
   availabilityStatus: AvailabilityStatus;
   lastDonationDate?: string | null;
   healthDisclosure?: string | null;
