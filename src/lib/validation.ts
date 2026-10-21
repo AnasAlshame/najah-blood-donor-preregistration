@@ -55,6 +55,14 @@ export const donorRegistrationSchema = z.object({
       message: 'الرقم الجامعي يجب أن يحتوي على أرقام أو رموز صالحة فقط',
     }),
 
+  universityEmail: z
+    .string({ required_error: 'البريد الإلكتروني الجامعي مطلوب' })
+    .trim()
+    .toLowerCase()
+    .regex(/^s[0-9]+@stu\.najah\.edu$/, {
+      message: 'يجب إدخال بريد جامعي رسمي يبدأ بحرف s متبوعاً بالرقم الجامعي (مثال: s12323975@stu.najah.edu)',
+    }),
+
   campus: z.enum(CAMPUSES, {
     message: 'يرجى اختيار موقع الحرم الجامعي من القائمة المعتمدة',
   }),

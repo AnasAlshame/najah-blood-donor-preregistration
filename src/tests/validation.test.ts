@@ -31,6 +31,7 @@ describe('Validation Logic and Phone Normalization Tests', () => {
     const validPayload = {
       fullName: 'أحمد خليل عبد الرحمن',
       universityId: '12015890',
+      universityEmail: 's12015890@stu.najah.edu',
       campus: 'الحرم الجديد (الأكاديمية)',
       phoneNumber: '0599876543',
       age: 21,
@@ -76,6 +77,7 @@ describe('Validation Logic and Phone Normalization Tests', () => {
     const payload = {
       fullName: 'محمد يوسف',
       universityId: '12133445',
+      universityEmail: 's12133445@stu.najah.edu',
       campus: 'الحرم الجديد (الأكاديمية)',
       phoneNumber: '0599112233',
       age: 20,
@@ -83,6 +85,7 @@ describe('Validation Logic and Phone Normalization Tests', () => {
       bloodType: 'B+',
       governorate: 'جنين',
       cityOrVillage: 'يعبد',
+      detailedAddress: 'البلدة القديمة',
       availabilityStatus: 'RECENTLY_DONATED',
       lastDonationDate: dateStr,
       consentGiven: true,

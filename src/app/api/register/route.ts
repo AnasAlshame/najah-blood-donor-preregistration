@@ -82,9 +82,10 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Combine detailed address into health_disclosure or store cleanly
+      // Combine detailed address and university email into health_disclosure or store cleanly
       const combinedNotes = [
-        validData.detailedAddress ? `العنوان التفصيلي: ${validData.detailedAddress}` : null,
+        `البريد الجامعي: ${validData.universityEmail}`,
+        `العنوان التفصيلي: ${validData.detailedAddress}`,
         validData.healthDisclosure ? `ملاحظات صحية: ${validData.healthDisclosure}` : null,
       ].filter(Boolean).join(' | ');
 
@@ -150,7 +151,8 @@ export async function POST(request: NextRequest) {
     const nowIso = new Date().toISOString();
 
     const combinedNotesLocal = [
-      validData.detailedAddress ? `العنوان التفصيلي: ${validData.detailedAddress}` : null,
+      `البريد الجامعي: ${validData.universityEmail}`,
+      `العنوان التفصيلي: ${validData.detailedAddress}`,
       validData.healthDisclosure ? `ملاحظات صحية: ${validData.healthDisclosure}` : null,
     ].filter(Boolean).join(' | ');
 

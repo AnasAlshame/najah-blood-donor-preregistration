@@ -56,6 +56,7 @@ export type Gender = (typeof GENDER_OPTIONS)[number];
 export interface DonorRegistrationInput {
   fullName: string;
   universityId: string;
+  universityEmail: string;
   campus: Campus;
   phoneNumber: string;
   age: number;

@@ -27,6 +27,7 @@ export default function RegistrationForm() {
   const [formData, setFormData] = useState({
     fullName: '',
     universityId: '',
+    universityEmail: '',
     campus: CAMPUSES[0],
     phoneNumber: '',
     age: '',
@@ -85,6 +86,8 @@ export default function RegistrationForm() {
         if (data.details) {
           setFieldErrors(data.details);
         }
+        // Scroll smoothly to top so the user sees the error/duplicate notice immediately
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
         // Redirect to clean success confirmation page
         router.push('/success');
@@ -171,6 +174,29 @@ export default function RegistrationForm() {
                 {fieldErrors.universityId[0]}
               </p>
             )}
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="block text-xs font-semibold text-[#0F172A] mb-1.5">
+              البريد الإلكتروني الجامعي للطلبة <span className="text-[#002B49] font-bold">*</span>
+            </label>
+            <input
+              type="email"
+              name="universityEmail"
+              required
+              placeholder="s12323975@stu.najah.edu"
+              value={formData.universityEmail}
+              onChange={handleChange}
+              className="w-full h-11 px-3.5 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] placeholder-[#94A3B8] font-mono ltr-content"
+            />
+            {fieldErrors.universityEmail && (
+              <p className="text-xs text-[#002B49] font-medium mt-1">
+                {fieldErrors.universityEmail[0]}
+              </p>
+            )}
+            <span className="text-[11px] text-[#475569] block mt-1">
+              * يُشترط استخدام البريد الجامعي الرسمي بصيغة: s + الرقم الجامعي @stu.najah.edu
+            </span>
           </div>
 
           <div className="md:col-span-2">
@@ -310,9 +336,20 @@ export default function RegistrationForm() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#0F172A] mb-1.5">
-              تاريخ آخر تبرع بالدم (اختياري)
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-semibold text-[#0F172A]">
+                تاريخ آخر تبرع بالدم (اختياري)
+              </label>
+              {formData.lastDonationDate && (
+                <button
+                  type="button"
+                  onClick={() => setFormData((prev) => ({ ...prev, lastDonationDate: '' }))}
+                  className="text-[11px] text-[#002B49] hover:underline font-semibold cursor-pointer"
+                >
+                  إعادة تعيين (تفريغ)
+                </button>
+              )}
+            </div>
             <div className="relative">
               <input
                 type="date"
