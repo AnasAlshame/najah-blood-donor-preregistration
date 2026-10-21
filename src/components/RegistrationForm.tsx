@@ -343,23 +343,27 @@ export default function RegistrationForm() {
               {formData.lastDonationDate && (
                 <button
                   type="button"
-                  onClick={() => setFormData((prev) => ({ ...prev, lastDonationDate: '' }))}
-                  className="text-[11px] text-[#002B49] hover:underline font-semibold cursor-pointer"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setFormData((prev) => ({ ...prev, lastDonationDate: '' }));
+                  }}
+                  className="inline-flex items-center gap-1 text-[11px] text-[#002B49] bg-[#E2E8F0] hover:bg-[#CBD5E1] px-2 py-0.5 rounded-md font-semibold cursor-pointer transition select-none z-10"
                 >
-                  إعادة تعيين (تفريغ)
+                  ✕ تفريغ التاريخ
                 </button>
               )}
             </div>
             <div className="relative">
               <input
+                key={formData.lastDonationDate || 'empty-date'}
                 type="date"
                 name="lastDonationDate"
                 value={formData.lastDonationDate}
                 onChange={handleChange}
                 max={new Date().toISOString().split('T')[0]}
-                className="w-full h-11 px-3.5 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] cursor-pointer appearance-none"
+                className="w-full h-11 px-3.5 text-sm rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] cursor-pointer"
               />
-              <Calendar className="w-4 h-4 text-[#475569] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
             {fieldErrors.lastDonationDate && (
               <p className="text-xs text-[#002B49] font-medium mt-1">

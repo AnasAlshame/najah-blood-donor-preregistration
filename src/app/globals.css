@@ -26,19 +26,13 @@ body {
 
 /* Custom styling for date inputs to look consistent across browsers and mobile */
 input[type="date"] {
-  position: relative;
   font-family: inherit;
   color-scheme: light;
 }
 
 input[type="date"]::-webkit-calendar-picker-indicator {
-  opacity: 0;
-  width: 100%;
-  height: 100%;
-  position: absolute;
-  top: 0;
-  left: 0;
   cursor: pointer;
+  padding: 4px;
 }
 
 /* Accessible focus ring using University Cyan */
